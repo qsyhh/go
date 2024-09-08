@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -16,20 +16,18 @@ func main() {
 	flag.Parse()
 
 	if *target == "" {
-		fmt.Println("请指定目标服务器的地址")
-		return
+		log.Fatal("请指定目标服务器的地址")
 	}
 
 	// 确保目标 URL 包含协议
 	if !strings.HasPrefix(*target, "http://") && !strings.HasPrefix(*target, "https://") {
-		*target = "http://" + *target
+		*target = "https://" + *target
 	}
 
 	// 解析目标 URL
 	targetURL, err := url.Parse(*target)
 	if err != nil {
-		fmt.Println("目标 URL 解析失败:", err)
-		return
+		log.Fatalf("目标 URL 解析失败: %v", err)
 	}
 
 	// 创建反向代理
@@ -37,11 +35,7 @@ func main() {
 
 	// 设置请求头
 	proxy.Director = func(req *http.Request) {
-		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-		req.Header.Set("Accept", "*/*")
-		req.Header.Set("Accept-Language", "en-US,en;q=0.5")
-		req.Header.Set("Accept-Encoding", "gzip, deflate")
-		req.Header.Set("Connection", "keep-alive")
+		req.Header.Set("User-Agent", "Miao-Plugin/3.1")
 
 		req.URL.Scheme = targetURL.Scheme
 		req.URL.Host = targetURL.Host
@@ -51,14 +45,16 @@ func main() {
 		}
 	}
 
-	// 启动服务器
+	// 处理请求并记录日志
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// 将请求转发到目标服务器
+		log.Printf("接收到请求: %s %s", r.Method, r.URL.String())
 		proxy.ServeHTTP(w, r)
+		log.Printf("已转发请求: %s %s", r.Method, r.URL.String())
 	})
 
-	fmt.Printf("反向代理服务器启动在 %s\n", *listen)
+	// 启动服务器
+	log.Printf("反向代理服务器启动在 %s", *listen)
 	if err := http.ListenAndServe(*listen, nil); err != nil {
-		fmt.Println("启动服务器失败:", err)
+		log.Fatalf("启动服务器失败: %v", err)
 	}
 }
