@@ -34,8 +34,15 @@ func main() {
         // 设置请求的 URL 为目标服务器的 URL
         r.URL.Host = targetURL.Host
         r.URL.Scheme = targetURL.Scheme
-		r.Header.Set("User-Agent", "Miao-Plugin/3.1")
-        r.Header.Set("X-Forwarded-Host", r.Host)
+	r.URL.Path = targetURL.Path
+	if targetURL.RawQuery != "" {
+	    r.URL.RawQuery = targetURL.RawQuery
+	}
+	r.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+	r.Header.Set("Accept", "*/*")
+	r.Header.Set("Accept-Language", "en-US,en;q=0.5")
+	r.Header.Set("Accept-Encoding", "gzip, deflate")
+	r.Header.Set("Connection", "keep-alive")
         proxy.ServeHTTP(w, r)
 	
 		log.Printf("已转发请求: %s %s", r.Method, r.URL.String())
