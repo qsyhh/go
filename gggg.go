@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-    target := flag.String("target", "https://enka.network/", "Target server to proxy")
+    target := flag.String("target", "https://enka.network", "Target server to proxy")
     listen := flag.String("listen", "0.0.0.0:7860", "Address to listen on")
     scheme := flag.String("scheme", "https", "Protocol scheme for the target URL")
     flag.Parse()
