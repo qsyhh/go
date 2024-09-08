@@ -13,16 +13,21 @@ type proxyHandler struct {
 }
 
 func (h *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// 确保目标 URL 包含协议
+	if !strings.HasPrefix(h.target, "http://") && !strings.HasPrefix(h.target, "https://") {
+		h.target = "http://" + h.target
+	}
     u, err := url.Parse(h.target)
     if err != nil {
         log.Fatalf("解析目标URL失败： %v", err)
     }
     if u.Scheme == "" {
-        u.Scheme = "https"
+        log.Fatalf("目标URL的协议方案为空")
     }
     if u.Host == "" {
-        u.Host = "enka.network"
+        log.Fatalf("目标URL的主机名为空")
     }
+
     proxy := httputil.NewSingleHostReverseProxy(u)
     proxy.Transport = &http.Transport{
         DisableKeepAlives: true,
