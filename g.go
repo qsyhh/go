@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	target   = flag.String("target", "", "Target server to proxy")
+	target   = flag.String("target", "https://enka.network", "Target server to proxy")
 	listen   = flag.String("listen", ":8080", "Address to listen on")
 	username = flag.String("username", "", "Username for basic access authentication")
 	password = flag.String("password", "", "Password for basic access authentication")
