@@ -21,6 +21,10 @@ func main() {
     if err != nil {
         log.Fatalf("解析目标URL失败： %v", err)
     }
+    
+    if u.Scheme == "" {
+        log.Fatalf("目标URL的协议方案为空")
+    }
 
     proxy := httputil.NewSingleHostReverseProxy(u)
 
