@@ -18,12 +18,13 @@ func (h *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         log.Fatalf("解析目标URL失败： %v", err)
     }
     if u.Scheme == "" {
-        log.Fatalf("目标URL的协议方案为空")
+        log.Printf("目标URL的协议方案为空")
+        u.Scheme = "https://"
     }
     if u.Host == "" {
         log.Fatalf("目标URL的主机名为空")
     }
-
+    log.Printf("解析目标URL：", u)
     proxy := httputil.NewSingleHostReverseProxy(u)
     proxy.Transport = &http.Transport{
         DisableKeepAlives: true,
@@ -36,7 +37,7 @@ func (h *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func main() {
     target := flag.String("target", "https://enka.network", "Target server to proxy")
-    listen := flag.String("listen", "0.0.0.0:7860", "Address to listen on")
+    listen := flag.String("listen", "", "Address to listen on")
     flag.Parse()
 
     if *target == "" || *listen == "" {
