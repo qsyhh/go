@@ -11,6 +11,7 @@ import (
 func main() {
     target := flag.String("target", "enka.network", "Target server to proxy")
     listen := flag.String("listen", ":7860", "Address to listen on")
+    scheme := flag.String("scheme", "https", "Protocol scheme for the target URL")
     flag.Parse()
 
     if *target == "" || *listen == "" {
@@ -21,7 +22,7 @@ func main() {
     if err != nil {
         log.Fatalf("解析目标URL失败： %v", err)
     }
-    
+    u.Scheme = *scheme
     if u.Scheme == "" {
         log.Fatalf("目标URL的协议方案为空")
     }
