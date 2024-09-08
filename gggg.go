@@ -33,6 +33,6 @@ func main() {
         proxy.ServeHTTP(w, r)
     }
     log.Printf("启动反向代理，监听 %s，转发到 %s", *listen, *target)
-    log.Fatal(http.ListenAndServe(*listen, proxy))
+    log.Fatal(http.ListenAndServe(*listen, handler))
 }
 
