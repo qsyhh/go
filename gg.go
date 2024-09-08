@@ -1,49 +1,48 @@
 package main
 
 import (
-    "flag"
-    "log"
-    "net/http"
-    "net/http/httputil"
-    "net/url"
+	"flag"
+	"fmt"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"strings"
 )
 
-type proxyHandler struct {
-    target string
-}
-
-func (h *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-    u, err := url.Parse(h.target)
-    if err != nil {
-        log.Fatalf("解析目标URL失败： %v", err)
-    }
-    if u.Scheme == "" {
-        log.Printf("目标URL的协议方案为空")
-        u.Scheme = "https://"
-    }
-    if u.Host == "" {
-        log.Fatalf("目标URL的主机名为空")
-    }
-    log.Printf("解析目标URL：", u)
-    proxy := httputil.NewSingleHostReverseProxy(u)
-    proxy.Transport = &http.Transport{
-        DisableKeepAlives: true,
-    }
-
-    r.URL.Path = "/" // 设置路径为根路径
-    r.URL.RawQuery = "" // 移除查询参数
-    proxy.ServeHTTP(w, r)
-}
-
 func main() {
-    target := flag.String("target", "", "Target server to proxy")
-    listen := flag.String("listen", "", "Address to listen on")
-    flag.Parse()
+	// 解析命令行参数
+	target := flag.String("target", "", "目标服务器的地址")
+	listen := flag.String("listen", "", "监听地址和端口")
+	flag.Parse()
 
-    if *target == "" || *listen == "" {
-        log.Fatal("请提供 -target 和 -listen 参数")
-    }
+	if *target == "" {
+		fmt.Println("请指定目标服务器的地址")
+		return
+	}
 
-    log.Printf("启动反向代理，监听 %s，转发到 %s", *listen, *target)
-    log.Fatal(http.ListenAndServe(*listen, &proxyHandler{target: *target}))
+	// 确保目标 URL 包含协议
+	if !strings.HasPrefix(*target, "http://") && !strings.HasPrefix(*target, "https://") {
+		*target = "https://" + *target
+	}
+
+	// 解析目标 URL
+	targetURL, err := url.Parse(*target)
+	if err != nil {
+		fmt.Println("目标 URL 解析失败:", err)
+		return
+	}
+
+	// 创建反向代理
+	proxy := httputil.NewSingleHostReverseProxy(targetURL)
+
+	// 启动服务器
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// 将请求转发到目标服务器
+		proxy.ServeHTTP(w, r)
+	})
+
+	fmt.Printf("反向代理服务器启动在 %s\n", *listen)
+	if err := http.ListenAndServe(*listen, nil); err != nil {
+		fmt.Println("启动服务器失败:", err)
+	}
 }
