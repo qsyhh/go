@@ -1,53 +1,29 @@
-import (
-	"flag"
-	"fmt"
-	"net/http"
-	"os"
-	"strings"
-)
+package main
 
-var (
-	target   = flag.String("target", "", "Target server to proxy")
-	listen   = flag.String("listen", ":8080", "Address to listen on")
-	username = flag.String("username", "", "Username for basic access authentication")
-	password = flag.String("password", "", "Password for basic access authentication")
+import (
+	"io/ioutil"
+	"log"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
 )
 
 func main() {
-	flag.Parse()
-
-	if *target == "" {
-		fmt.Println("Error: target is required")
-		os.Exit(1)
+	targetURL, err := url.Parse("http://enka.network")
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	proxy := NewProxy(*target)
+	proxy := httputil.NewSingleHostReverseProxy(targetURL)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		proxy.ServeHTTP(w, r)
+	})
 
-	if *username != "" || *password != "" {
-		auth := fmt.Sprintf("%s:%s", *username, *password)
-		authStr := "Basic " + strings.TrimSpace(string(os.ExpandEnv(auth)))
-		fmt.Println("HTTP Proxy Listening with Basic Auth:", authStr)
-		http.ListenAndServe(*listen, http.UnauthorizedHandler)
-	} else {
-		fmt.Println("HTTP Proxy Listening...")
-		http.ListenAndServe(*listen, proxy)
+	log.Println("Starting proxy server on 0.0.0.0:7860")
+	err = http.ListenAndServe("0.0.0.0:7860", nil)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
-type Proxy struct {
-	target *string
-}
 
-func NewProxy(target string) *Proxy {
-	return &Proxy{&target}
-}
-
-func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proxy := &http.Proxy{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-		},
-	}
-
-	proxy.ServeHTTP(w, r)
-}
