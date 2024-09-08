@@ -1,55 +1,47 @@
 package main
 
 import (
-	"flag"
-	"fmt"
-	"net/http"
-	"os"
-	"strings"
+    "flag"
+    "log"
+    "net/http"
+    "net/http/httputil"
+    "net/url"
 )
 
-var (
-	target   = flag.String("target", "", "Target server to proxy")
-	listen   = flag.String("listen", ":8080", "Address to listen on")
-	username = flag.String("username", "", "Username for basic access authentication")
-	password = flag.String("password", "", "Password for basic access authentication")
-)
+type proxyHandler struct {
+    target string
+}
+
+func (h *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+    u, err := url.Parse(h.target)
+    if err != nil {
+        log.Fatalf("解析目标URL失败： %v", err)
+    }
+    u.Host = "enka.network"
+    u.Scheme = "https"
+    if u.Scheme == "" {
+        log.Fatalf("目标URL的协议方案为空")
+    }
+
+    proxy := httputil.NewSingleHostReverseProxy(u)
+    proxy.Transport = &http.Transport{
+        DisableKeepAlives: true,
+    }
+
+    r.URL.Path = "/" // 设置路径为根路径
+    r.URL.RawQuery = "" // 移除查询参数
+    proxy.ServeHTTP(w, r)
+}
 
 func main() {
-	flag.Parse()
+    target := flag.String("target", "https://enka.network", "Target server to proxy")
+    listen := flag.String("listen", "0.0.0.0:7860", "Address to listen on")
+    flag.Parse()
 
-	if *target == "" {
-		fmt.Println("Error: target is required")
-		os.Exit(1)
-	}
+    if *target == "" || *listen == "" {
+        log.Fatal("请提供 -target 和 -listen 参数")
+    }
 
-	proxy := NewProxy(*target)
-
-	if *username != "" || *password != "" {
-		auth := fmt.Sprintf("%s:%s", *username, *password)
-		authStr := "Basic " + strings.TrimSpace(string(os.ExpandEnv(auth)))
-		fmt.Println("HTTP Proxy Listening with Basic Auth:", authStr)
-		http.ListenAndServe(*listen, http.UnauthorizedHandler)
-	} else {
-		fmt.Println("HTTP Proxy Listening...")
-		http.ListenAndServe(*listen, proxy)
-	}
-}
-
-type Proxy struct {
-	target *string
-}
-
-func NewProxy(target string) *Proxy {
-	return &Proxy{&target}
-}
-
-func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	proxy := &http.Proxy{
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-		},
-	}
-
-	proxy.ServeHTTP(w, r)
+    log.Printf("启动反向代理，监听 %s，转发到 %s", *listen, *target)
+    log.Fatal(http.ListenAndServe(*listen, &proxyHandler{target: *target}))
 }
