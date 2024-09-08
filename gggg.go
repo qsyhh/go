@@ -9,8 +9,8 @@ import (
 )
 
 func main() {
-    target := flag.String("target", "", "Target server to proxy")
-    listen := flag.String("listen", "", "Address to listen on")
+    target := flag.String("target", "https://enka.network", "Target server to proxy")
+    listen := flag.String("listen", ":7860", "Address to listen on")
     flag.Parse()
 
     if *target == "" || *listen == "" {
