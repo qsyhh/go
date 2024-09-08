@@ -28,7 +28,10 @@ func main() {
     }
 
     proxy := httputil.NewSingleHostReverseProxy(u)
-
+    handler := func(w http.ResponseWriter, r *http.Request) {
+        r.Host = u.Host // 设置正确的Host字段
+        proxy.ServeHTTP(w, r)
+    }
     log.Printf("启动反向代理，监听 %s，转发到 %s", *listen, *target)
     log.Fatal(http.ListenAndServe(*listen, proxy))
 }
