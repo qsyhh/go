@@ -9,9 +9,9 @@ import (
 )
 
 func main() {
-    target := flag.String("target", "", "Target server to proxy")
-    listen := flag.String("listen", "", "Address to listen on")
-    scheme := flag.String("scheme", "", "Protocol scheme for the target URL")
+    target := flag.String("target", "https://enka.network/", "Target server to proxy")
+    listen := flag.String("listen", "0.0.0.0:7860", "Address to listen on")
+    scheme := flag.String("scheme", "hppts", "Protocol scheme for the target URL")
     flag.Parse()
 
     if *target == "" || *listen == "" {
@@ -22,6 +22,7 @@ func main() {
     if err != nil {
         log.Fatalf("解析目标URL失败： %v", err)
     }
+    u.Host = "enka.network"
     u.Scheme = *scheme
     if u.Scheme == "" {
         log.Fatalf("目标URL的协议方案为空")
