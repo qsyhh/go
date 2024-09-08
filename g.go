@@ -19,7 +19,7 @@ func (h *proxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     }
     if u.Scheme == "" {
         log.Printf("目标URL的协议方案为空")
-        u.Scheme = "https:\/\/"
+        u.Scheme = "https://"
     }
     if u.Host == "" {
         log.Fatalf("目标URL的主机名为空")
